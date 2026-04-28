@@ -40,6 +40,39 @@ const priorityConfig = {
   },
 };
 
+// Label color presets
+const labelColors: Record<string, string> = {
+  bug: "bg-red-500 text-white",
+  feature: "bg-violet-500 text-white",
+  design: "bg-pink-500 text-white",
+  tasarım: "bg-pink-500 text-white",
+  acil: "bg-red-600 text-white",
+  urgent: "bg-red-600 text-white",
+  backend: "bg-amber-500 text-white",
+  frontend: "bg-sky-500 text-white",
+  website: "bg-teal-500 text-white",
+  blog: "bg-emerald-500 text-white",
+  email: "bg-orange-500 text-white",
+};
+
+function getLabelColor(label: string): string {
+  const lower = label.toLowerCase();
+  for (const [key, color] of Object.entries(labelColors)) {
+    if (lower.includes(key)) return color;
+  }
+  // Fallback: generate a color from label hash
+  const hash = label.split("").reduce((a, c) => a + c.charCodeAt(0), 0);
+  const colors = [
+    "bg-indigo-500 text-white",
+    "bg-cyan-500 text-white",
+    "bg-fuchsia-500 text-white",
+    "bg-lime-600 text-white",
+    "bg-rose-500 text-white",
+    "bg-teal-500 text-white",
+  ];
+  return colors[hash % colors.length];
+}
+
 export const TaskCard = memo(function TaskCard({
   task,
   onUpdate,
@@ -66,11 +99,16 @@ export const TaskCard = memo(function TaskCard({
   const priority = priorityConfig[task.priority || "medium"];
   const PriorityIcon = priority.icon;
 
-  // Due date formatting
-  const isDueDateOverdue = task.due_date ? new Date(task.due_date) < new Date() : false;
-  const formattedDueDate = task.due_date
-    ? new Date(task.due_date).toLocaleDateString("en-US", { month: "short", day: "numeric" })
+  // Due date
+  const hasDueDate = !!task.due_date;
+  const isDueDateOverdue = hasDueDate ? new Date(task.due_date!) < new Date() : false;
+  const formattedDueDate = hasDueDate
+    ? new Date(task.due_date!).toLocaleDateString("en-US", { month: "short", day: "numeric" })
     : null;
+
+  // Checklist
+  const checklistTotal = task.checklist_items?.length || 0;
+  const checklistDone = task.checklist_items?.filter(i => i.is_completed).length || 0;
 
   return (
     <>
@@ -81,20 +119,26 @@ export const TaskCard = memo(function TaskCard({
         {...listeners}
         className={cn(
           "group rounded-lg border border-border/40 bg-card p-3 cursor-grab active:cursor-grabbing task-card-transition touch-none",
-          "hover:border-primary/20",
+          "hover:border-primary/20 hover:shadow-md",
           isDragging && "opacity-40 rotate-2 scale-105 shadow-2xl z-50"
         )}
         onClick={() => setIsDialogOpen(true)}
       >
-        <div className="flex items-start gap-2">
-          {/* Content */}
-          <div className="flex-1 min-w-0 space-y-2">
-            {/* Title */}
-            <p className="text-sm font-medium leading-snug">{task.title}</p>
+        <div className="space-y-2">
+          {/* Top: Label badge (colored, Trello-style) */}
+          {task.label && (
+            <Badge className={cn("text-[10px] px-2 py-0.5 rounded-sm font-semibold border-0", getLabelColor(task.label))}>
+              {task.label}
+            </Badge>
+          )}
 
-            {/* Meta Row */}
-            <div className="flex items-center gap-1.5 flex-wrap">
-              {/* Priority Badge */}
+          {/* Title */}
+          <p className="text-sm font-medium leading-snug">{task.title}</p>
+
+          {/* Bottom meta row */}
+          <div className="flex items-center justify-between">
+            <div className="flex items-center gap-2 flex-wrap">
+              {/* Priority */}
               <Badge
                 variant="outline"
                 className={cn("text-[10px] px-1.5 py-0 h-5 font-medium", priority.color)}
@@ -103,27 +147,15 @@ export const TaskCard = memo(function TaskCard({
                 {priority.label}
               </Badge>
 
-              {/* Label */}
-              {task.label && (
-                <Badge variant="outline" className="text-[10px] px-1.5 py-0 h-5 font-medium">
-                  {task.label}
-                </Badge>
-              )}
-
               {/* Due Date */}
               {formattedDueDate && (
-                <Badge
-                  variant="outline"
-                  className={cn(
-                    "text-[10px] px-1.5 py-0 h-5 font-medium",
-                    isDueDateOverdue
-                      ? "bg-red-500/10 text-red-400 border-red-500/20"
-                      : "bg-blue-500/10 text-blue-400 border-blue-500/20"
-                  )}
-                >
-                  <Clock className="h-2.5 w-2.5 mr-0.5" />
+                <span className={cn(
+                  "flex items-center gap-0.5 text-[10px]",
+                  isDueDateOverdue ? "text-red-400" : "text-muted-foreground"
+                )}>
+                  <Clock className="h-3 w-3" />
                   {formattedDueDate}
-                </Badge>
+                </span>
               )}
 
               {/* Description indicator */}
@@ -131,21 +163,25 @@ export const TaskCard = memo(function TaskCard({
                 <MessageSquare className="h-3 w-3 text-muted-foreground/50" />
               )}
 
-              {/* Checklist indicator */}
-              {task.checklist_items && task.checklist_items.length > 0 && (
-                <span className="flex items-center gap-0.5 text-[10px] text-muted-foreground">
-                  <CheckSquare className="h-2.5 w-2.5" />
-                  {task.checklist_items.filter(i => i.is_completed).length}/{task.checklist_items.length}
+              {/* Checklist progress */}
+              {checklistTotal > 0 && (
+                <span className={cn(
+                  "flex items-center gap-0.5 text-[10px]",
+                  checklistDone === checklistTotal ? "text-emerald-400" : "text-muted-foreground"
+                )}>
+                  <CheckSquare className="h-3 w-3" />
+                  {checklistDone}/{checklistTotal}
                 </span>
               )}
             </div>
 
-            {/* Bottom row: Assignee */}
+            {/* Assignee avatar (right side) */}
             {task.assignee && (
-              <div className="flex justify-end">
-                <div className="h-6 w-6 rounded-full bg-primary/20 text-primary flex items-center justify-center text-[10px] font-bold" title={task.assignee}>
-                  {task.assignee.charAt(0).toUpperCase()}
-                </div>
+              <div
+                className="h-6 w-6 rounded-full bg-primary/20 text-primary flex items-center justify-center text-[10px] font-bold shrink-0"
+                title={task.assignee}
+              >
+                {task.assignee.charAt(0).toUpperCase()}
               </div>
             )}
           </div>
