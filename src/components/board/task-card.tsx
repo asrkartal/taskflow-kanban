@@ -41,7 +41,7 @@ const priorityConfig = {
   },
 };
 
-// Label color presets
+
 const labelColors: Record<string, string> = {
   bug: "bg-red-500 text-white",
   feature: "bg-violet-500 text-white",
@@ -61,7 +61,7 @@ function getLabelColor(label: string): string {
   for (const [key, color] of Object.entries(labelColors)) {
     if (lower.includes(key)) return color;
   }
-  // Fallback: generate a color from label hash
+  // Fallback
   const hash = label.split("").reduce((a, c) => a + c.charCodeAt(0), 0);
   const colors = [
     "bg-indigo-500 text-white",
@@ -102,14 +102,14 @@ export const TaskCard = memo(function TaskCard({
   const priority = priorityConfig[task.priority || "medium"];
   const PriorityIcon = priority.icon;
 
-  // Due date
+
   const hasDueDate = !!task.due_date;
   const isDueDateOverdue = hasDueDate ? new Date(task.due_date!) < new Date() : false;
   const formattedDueDate = hasDueDate
     ? new Date(task.due_date!).toLocaleDateString("en-US", { month: "short", day: "numeric" })
     : null;
 
-  // Checklist
+
   const checklistTotal = task.checklist_items?.length || 0;
   const checklistDone = task.checklist_items?.filter(i => i.is_completed).length || 0;
 
@@ -129,20 +129,20 @@ export const TaskCard = memo(function TaskCard({
         onClick={() => setIsDialogOpen(true)}
       >
         <div className="space-y-2">
-          {/* Top: Label badge (colored, Trello-style) */}
+
           {task.label && (
             <Badge className={cn("text-[10px] px-2 py-0.5 rounded-sm font-semibold border-0", getLabelColor(task.label))}>
               {task.label}
             </Badge>
           )}
 
-          {/* Title */}
+
           <p className="text-sm font-medium leading-snug">{task.title}</p>
 
-          {/* Bottom meta row */}
+
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-2 flex-wrap">
-              {/* Priority */}
+
               <Badge
                 variant="outline"
                 className={cn("text-[10px] px-1.5 py-0 h-5 font-medium", priority.color)}
@@ -151,7 +151,7 @@ export const TaskCard = memo(function TaskCard({
                 {priority.label}
               </Badge>
 
-              {/* Due Date */}
+
               {formattedDueDate && (
                 <span className={cn(
                   "flex items-center gap-0.5 text-[10px]",
@@ -162,12 +162,12 @@ export const TaskCard = memo(function TaskCard({
                 </span>
               )}
 
-              {/* Description indicator */}
+
               {task.description && (
                 <MessageSquare className="h-3 w-3 text-muted-foreground/50" />
               )}
 
-              {/* Checklist progress */}
+
               {checklistTotal > 0 && (
                 <span className={cn(
                   "flex items-center gap-0.5 text-[10px]",
@@ -179,7 +179,7 @@ export const TaskCard = memo(function TaskCard({
               )}
             </div>
 
-            {/* Assignee avatar (right side) */}
+
             {task.assignee && (
               <div
                 className="h-6 w-6 rounded-full bg-primary/20 text-primary flex items-center justify-center text-[10px] font-bold shrink-0"
@@ -192,7 +192,7 @@ export const TaskCard = memo(function TaskCard({
         </div>
       </div>
 
-      {/* Task Detail Dialog */}
+
       <TaskDialog
         task={task}
         open={isDialogOpen}

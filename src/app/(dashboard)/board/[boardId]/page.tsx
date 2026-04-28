@@ -31,7 +31,7 @@ export default async function BoardPage({ params }: BoardPageProps) {
     data: { user },
   } = await supabase.auth.getUser();
 
-  // Fetch board without enforcing user_id yet
+
   const { data: board } = await supabase
     .from("boards")
     .select("*")
@@ -40,7 +40,7 @@ export default async function BoardPage({ params }: BoardPageProps) {
 
   if (!board) redirect("/dashboard");
 
-  // Determine permissions
+
   const isOwner = user && board.user_id === user.id;
   
   if (!board.is_public && !isOwner) {
@@ -49,14 +49,14 @@ export default async function BoardPage({ params }: BoardPageProps) {
 
   const isReadOnly = !isOwner;
 
-  // Fetch columns with tasks
+  // Columns and tasks
   const { data: columns } = await supabase
     .from("columns")
     .select("*")
     .eq("board_id", boardId)
     .order("position", { ascending: true });
 
-  // Fetch all tasks for this board's columns
+
   const columnIds = (columns || []).map((c) => c.id);
   let tasks: Array<{
     id: string;
@@ -88,7 +88,7 @@ export default async function BoardPage({ params }: BoardPageProps) {
     tasks = data || [];
   }
 
-  // Combine columns with their tasks
+
   const columnsWithTasks = (columns || []).map((col) => ({
     ...col,
     tasks: tasks

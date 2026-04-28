@@ -53,11 +53,10 @@ export function KanbanBoard({
   const supabase = createClient();
   const scrollContainerRef = useRef<HTMLDivElement>(null);
 
-  // Keep a ref to the latest columns to prevent stale closures in drag handlers
   const columnsRef = useRef(columns);
   columnsRef.current = columns;
 
-  // Sensors for drag & drop (pointer + touch + keyboard)
+  // Dnd Sensors
   const sensors = useSensors(
     useSensor(PointerSensor, {
       activationConstraint: {
@@ -73,22 +72,20 @@ export function KanbanBoard({
     useSensor(KeyboardSensor)
   );
 
-  // Column IDs for SortableContext
+  // Memoized IDs
   const columnIds = useMemo(
     () => columns.map((col) => col.id),
     [columns]
   );
 
-  // Find which column contains a task using the REF (always latest state)
+  // Helpers
   const findColumnByTaskId = useCallback((taskId: string) => {
     return columnsRef.current.find((col) =>
       col.tasks.some((task) => task.id === taskId)
     );
   }, []);
 
-  // ============================================================
-  // Drag Handlers
-  // ============================================================
+  // Handlers
 
   const handleDragStart = useCallback((event: DragStartEvent) => {
     const { active } = event;
@@ -166,7 +163,7 @@ export function KanbanBoard({
     // Use latest state from ref
     const currentCols = columnsRef.current;
 
-    // ── Column reorder ──
+    // Column reorder
     const isColumnDrag = currentCols.some(c => c.id === activeId);
     if (isColumnDrag) {
       const activeColIndex = currentCols.findIndex(c => c.id === activeId);
@@ -177,7 +174,7 @@ export function KanbanBoard({
         const [moved] = newCols.splice(activeColIndex, 1);
         newCols.splice(overColIndex, 0, moved);
 
-        // Recalculate positions
+        // Update positions
         const updatedCols = newCols.map((col, i) => ({ ...col, position: (i + 1) * 1000 }));
         setColumns(updatedCols);
 
@@ -197,7 +194,7 @@ export function KanbanBoard({
       return;
     }
 
-    // ── Task reorder ──
+    // Task reorder
     const destCol = currentCols.find(col => col.tasks.some(t => t.id === activeId));
     if (!destCol) return;
 
@@ -261,9 +258,7 @@ export function KanbanBoard({
     }
   }, [supabase, initialColumns]);
 
-  // ============================================================
-  // Task CRUD Operations
-  // ============================================================
+  // CRUD
 
   const handleAddTask = useCallback(
     async (columnId: string, title: string, priority: string = "medium", label?: string) => {
@@ -273,7 +268,7 @@ export function KanbanBoard({
       const position = getEndPosition(column.tasks);
       const tempId = `temp-${Date.now()}`;
 
-      // Optimistic update
+      // Optimistic add
       const newTask: Task = {
         id: tempId,
         column_id: columnId,
@@ -351,7 +346,7 @@ export function KanbanBoard({
       );
 
       try {
-        // Remove relational fields that are not columns in the tasks table
+        // Filter fields
         const { checklist_items, comments, ...dbUpdates } = updates;
 
         // If there are no actual fields to update on the task row itself, skip DB call
@@ -380,7 +375,7 @@ export function KanbanBoard({
 
   const handleDeleteTask = useCallback(
     async (taskId: string) => {
-      // Optimistic update
+      // Optimistic delete
       const prevColumns = columns;
       setColumns((prev) =>
         prev.map((col) => ({
@@ -405,9 +400,7 @@ export function KanbanBoard({
     [columns, supabase]
   );
 
-  // ============================================================
-  // Column CRUD Operations
-  // ============================================================
+  // Columns
 
   const handleAddColumn = useCallback(
     async (title: string, color: string) => {

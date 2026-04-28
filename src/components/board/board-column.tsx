@@ -112,13 +112,13 @@ export function BoardColumn({
         isDragging && "opacity-40 scale-[0.97]"
       )}
     >
-      {/* Column Color Indicator */}
+
       <div
         className="column-indicator w-full rounded-t-xl"
         style={{ backgroundColor: column.color }}
       />
 
-      {/* Column Header */}
+
       <div className="flex items-center justify-between px-3 py-2.5">
         <div className="flex items-center gap-1 flex-1 min-w-0">
           {!isReadOnly && (
@@ -187,7 +187,7 @@ export function BoardColumn({
         )}
       </div>
 
-      {/* Task List */}
+
       <ScrollArea className="flex-1 px-2 custom-scrollbar">
         <div
           ref={setDroppableRef}
@@ -216,7 +216,7 @@ export function BoardColumn({
         </div>
       </ScrollArea>
 
-      {/* Column Footer / Add Task */}
+
       <div className="p-2 border-t border-border/20 bg-background/30 rounded-b-xl mt-auto shrink-0">
         {!isAddingTask ? (
           !isReadOnly && (

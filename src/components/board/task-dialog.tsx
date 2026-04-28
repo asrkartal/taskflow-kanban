@@ -76,12 +76,7 @@ export function TaskDialog({
   const [label, setLabel] = useState(task.label || "");
   const [isEditingLabel, setIsEditingLabel] = useState(false);
 
-  // Due date
-  const [dueDate, setDueDate] = useState(task.due_date || "");
 
-  // Assignee
-  const [assignee, setAssignee] = useState(task.assignee || "");
-  const [isEditingAssignee, setIsEditingAssignee] = useState(false);
 
   // Checklist
   const [checklistItems, setChecklistItems] = useState<ChecklistItem[]>([]);
@@ -123,7 +118,7 @@ export function TaskDialog({
     loadData();
   }, [open, task.id, supabase]);
 
-  // ── Title ──
+
   const handleSaveTitle = () => {
     if (editTitle.trim() && editTitle.trim() !== task.title) {
       onUpdate(task.id, { title: editTitle.trim() });
@@ -131,7 +126,7 @@ export function TaskDialog({
     setIsEditingTitle(false);
   };
 
-  // ── Description ──
+
   const handleSaveDescription = () => {
     const newDesc = description.trim() || null;
     if (newDesc !== task.description) {
@@ -140,7 +135,7 @@ export function TaskDialog({
     setIsEditingDesc(false);
   };
 
-  // ── Label ──
+
   const handleSaveLabel = () => {
     const newLabel = label.trim() || null;
     if (newLabel !== task.label) {
@@ -149,26 +144,26 @@ export function TaskDialog({
     setIsEditingLabel(false);
   };
 
-  // ── Priority ──
+
   const handlePriorityChange = (value: string | null) => {
     if (value) onUpdate(task.id, { priority: value as TaskPriority });
   };
 
-  // ── Due Date ──
+
   const handleDueDateChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const val = e.target.value;
     setDueDate(val);
     onUpdate(task.id, { due_date: val || null });
   };
 
-  // ── Assignee ──
+
   const handleSaveAssignee = () => {
     const val = assignee.trim() || null;
     onUpdate(task.id, { assignee: val });
     setIsEditingAssignee(false);
   };
 
-  // ── Checklist CRUD ──
+
   const handleAddChecklistItem = useCallback(async () => {
     if (!newChecklistItem.trim()) return;
     const position = checklistItems.length * 1000;
@@ -233,7 +228,7 @@ export function TaskDialog({
   const totalCount = checklistItems.length;
   const progressPercent = totalCount > 0 ? (completedCount / totalCount) * 100 : 0;
 
-  // ── Comments CRUD ──
+
   const handleAddComment = async () => {
     if (!newComment.trim() || !currentUserId) return;
     const tempId = `temp-${Date.now()}`;
@@ -276,7 +271,7 @@ export function TaskDialog({
     }
   };
 
-  // ── Delete Task ──
+
   const handleDelete = () => {
     onDelete(task.id);
     onOpenChange(false);
@@ -285,7 +280,7 @@ export function TaskDialog({
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="sm:max-w-[580px] bg-card/95 backdrop-blur-xl border-border/50 p-0 overflow-hidden max-h-[90vh]">
-        {/* Header */}
+
         <DialogHeader className="px-6 pt-6 pb-0">
           <div className="flex items-start gap-3">
             <div className="flex-1 min-w-0">
@@ -329,7 +324,7 @@ export function TaskDialog({
 
         <ScrollArea className="max-h-[calc(90vh-100px)]">
           <div className="px-6 pb-6 space-y-5 mt-4">
-            {/* Priority, Label, Due Date, Assignee Row */}
+
             <div className="flex flex-wrap gap-3">
               {/* Priority */}
               <div className="space-y-1.5">
@@ -471,7 +466,7 @@ export function TaskDialog({
 
             <Separator className="opacity-30" />
 
-            {/* Description */}
+
             <div className="space-y-2">
               <Label className="text-sm font-medium">Description</Label>
               {isEditingDesc && !isReadOnly ? (
@@ -503,7 +498,7 @@ export function TaskDialog({
 
             <Separator className="opacity-30" />
 
-            {/* Checklist */}
+
             <div className="space-y-3">
               <div className="flex items-center justify-between">
                 <Label className="text-sm font-medium flex items-center gap-1.5">
@@ -562,7 +557,7 @@ export function TaskDialog({
 
             <Separator className="opacity-30" />
 
-            {/* Comments */}
+
             <div className="space-y-3">
               <Label className="text-sm font-medium flex items-center gap-1.5">
                 <MessageSquare className="h-4 w-4" /> Comments
@@ -571,7 +566,7 @@ export function TaskDialog({
                 )}
               </Label>
 
-              {/* New comment input */}
+
               {!isReadOnly && (
                 <div className="flex items-start gap-2">
                   <div className="h-7 w-7 rounded-full bg-primary/20 text-primary flex items-center justify-center text-[10px] font-bold shrink-0 mt-0.5">
@@ -592,7 +587,7 @@ export function TaskDialog({
                 </div>
               )}
 
-              {/* Comments list */}
+
               {comments.length > 0 && (
                 <div className="space-y-2 max-h-[200px] overflow-y-auto custom-scrollbar">
                   {comments.map((cmt) => (
@@ -627,7 +622,7 @@ export function TaskDialog({
 
             <Separator className="opacity-30" />
 
-            {/* Actions */}
+
             {!isReadOnly && (
               <div className="flex justify-end">
                 <Button variant="destructive" size="sm" className="h-8 text-xs" onClick={handleDelete}>
