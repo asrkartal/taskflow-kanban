@@ -1,14 +1,21 @@
 # 🚀 TaskFlow Kanban
 
+**Live Demo:** [https://taskflow-kanban.vercel.app](https://taskflow-kanban.vercel.app) *(veya kendi Vercel linkinizi buraya ekleyebilirsiniz)*
+
 TaskFlow Kanban, modern web teknolojileri ile geliştirilmiş, şık, hızlı ve kullanıcı dostu bir proje yönetim uygulamasıdır. Trello ve Jira gibi profesyonel araçların sadeliğini ve hızını hedefleyerek inşa edilmiştir.
 
 ## ✨ Özellikler
 
 - **Full Drag & Drop Deneyimi:** Görevleri ve sütunları özgürce sürükleyip bırakın (Powered by `@dnd-kit`).
-- **Gelişmiş Görev Yönetimi:** Görev oluştururken öncelik (Priority) belirleme ve etiket (Label) ekleme.
+- **Gelişmiş Görev Yönetimi:** 
+  - Görev oluştururken öncelik (Priority) belirleme ve etiket (Label) ekleme.
+  - **Bitiş Tarihi (Due Date):** Görevlere teslim tarihi atayın.
+  - **Kişi Atama (Assignee):** Görevleri ekip üyelerine atayın.
+- **Alt Görevler (Checklist):** Görevleri daha küçük adımlara bölüp ilerlemeyi takip edin.
+- **Yorum Sistemi (Comments):** Görevlerin altına geri bildirim ve notlar bırakın.
 - **Gerçek Zamanlı Veritabanı:** Tüm değişiklikler anında Supabase veritabanına kaydedilir ve sayfayı yenilediğinizde konumlar korunur.
 - **Modern Tasarım (UI/UX):** 
-  - Glassmorphism efektleri ve derinlik algısı.
+  - Glassmorphism efektleri ve Trello-benzeri dinamik kart görünümü.
   - Karanlık mod (Dark Mode) uyumlu premium renk paleti.
   - Akıcı mikro-animasyonlar.
 - **Güvenli Kimlik Doğrulama:** Supabase Auth ile kullanıcı kaydı ve güvenli giriş sistemi.
@@ -43,7 +50,10 @@ NEXT_PUBLIC_SUPABASE_URL=your_project_url
 NEXT_PUBLIC_SUPABASE_ANON_KEY=your_anon_key
 ```
 
-### 4. Geliştirme Sunucusunu Başlatın
+### 4. Supabase Veritabanını Kurun
+Projenizdeki `supabase/schema.sql` ve `supabase/migration_v2.sql` dosyalarındaki SQL sorgularını Supabase kontrol panelindeki SQL Editor üzerinden çalıştırarak tablolarınızı oluşturun.
+
+### 5. Geliştirme Sunucusunu Başlatın
 ```bash
 npm run dev
 ```
