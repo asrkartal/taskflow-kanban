@@ -1,36 +1,60 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# 🚀 TaskFlow Kanban
 
-## Getting Started
+TaskFlow Kanban, modern web teknolojileri ile geliştirilmiş, şık, hızlı ve kullanıcı dostu bir proje yönetim uygulamasıdır. Trello ve Jira gibi profesyonel araçların sadeliğini ve hızını hedefleyerek inşa edilmiştir.
 
-First, run the development server:
+![Screenshot](public/window.svg) <!-- Eğer ekran görüntünüz varsa buraya ekleyebilirsiniz -->
 
+## ✨ Özellikler
+
+- **Full Drag & Drop Deneyimi:** Görevleri ve sütunları özgürce sürükleyip bırakın (Powered by `@dnd-kit`).
+- **Gelişmiş Görev Yönetimi:** Görev oluştururken öncelik (Priority) belirleme ve etiket (Label) ekleme.
+- **Gerçek Zamanlı Veritabanı:** Tüm değişiklikler anında Supabase veritabanına kaydedilir ve sayfayı yenilediğinizde konumlar korunur.
+- **Modern Tasarım (UI/UX):** 
+  - Glassmorphism efektleri ve derinlik algısı.
+  - Karanlık mod (Dark Mode) uyumlu premium renk paleti.
+  - Akıcı mikro-animasyonlar.
+- **Güvenli Kimlik Doğrulama:** Supabase Auth ile kullanıcı kaydı ve güvenli giriş sistemi.
+- **Dinamik Board Yönetimi:** Sidebar üzerinden board oluşturma, isimlendirme ve anlık geçişler.
+
+## 🛠️ Teknoloji Yığını
+
+- **Framework:** [Next.js 14 (App Router)](https://nextjs.org/)
+- **Veritabanı & Auth:** [Supabase](https://supabase.com/)
+- **Styling:** [Tailwind CSS](https://tailwindcss.com/)
+- **UI Bileşenleri:** [Shadcn/UI](https://ui.shadcn.com/)
+- **Drag & Drop:** [@dnd-kit](https://dnd-kit.com/)
+- **İkonlar:** [Lucide React](https://lucide.dev/)
+
+## 🚀 Hızlı Başlangıç
+
+### 1. Depoyu Klonlayın
 ```bash
-npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
+git clone https://github.com/asrkartal/taskflow-kanban.git
+cd taskflow-kanban
 ```
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+### 2. Bağımlılıkları Kurun
+```bash
+npm install
+```
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+### 3. Çevresel Değişkenleri Ayarlayın
+`.env.local` dosyası oluşturun ve Supabase bilgilerinizi ekleyin:
+```env
+NEXT_PUBLIC_SUPABASE_URL=your_project_url
+NEXT_PUBLIC_SUPABASE_ANON_KEY=your_anon_key
+```
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+### 4. Geliştirme Sunucusunu Başlatın
+```bash
+npm run dev
+```
+Uygulama artık `http://localhost:3000` adresinde çalışıyor!
 
-## Learn More
+## 📦 Deployment
 
-To learn more about Next.js, take a look at the following resources:
+Bu proje **Vercel** ile tam uyumludur. GitHub deponuzu bağlayarak saniyeler içinde yayına alabilirsiniz.
 
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
+---
 
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
-
-## Deploy on Vercel
-
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
-
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+Geliştiren: [asrkartal](https://github.com/asrkartal)
