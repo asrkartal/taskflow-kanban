@@ -31,7 +31,7 @@ import {
   Calendar,
   Tag,
 } from "lucide-react";
-import { AiEnhanceButton } from "@/components/shared/ai-enhance-button";
+
 import type { Task, TaskPriority } from "@/types";
 import { cn } from "@/lib/utils";
 
@@ -92,10 +92,6 @@ export function TaskDialog({
     }
   };
 
-  const handleAiDescription = (generatedText: string) => {
-    setDescription(generatedText);
-    onUpdate(task.id, { description: generatedText });
-  };
 
   const handleDelete = () => {
     onDelete(task.id);
@@ -256,10 +252,6 @@ export function TaskDialog({
           <div className="space-y-2">
             <div className="flex items-center justify-between">
               <Label className="text-sm font-medium">Description</Label>
-              <AiEnhanceButton
-                taskTitle={task.title}
-                onGenerated={handleAiDescription}
-              />
             </div>
 
             {isEditingDesc ? (

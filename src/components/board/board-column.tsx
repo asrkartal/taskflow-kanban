@@ -30,7 +30,7 @@ import { cn } from "@/lib/utils";
 interface BoardColumnProps {
   column: Column;
   tasks: Task[];
-  onAddTask: (columnId: string, title: string) => void;
+  onAddTask: (columnId: string, title: string, priority?: string, label?: string) => void;
   onUpdateTask: (taskId: string, updates: Partial<Task>) => void;
   onDeleteTask: (taskId: string) => void;
   onUpdateColumn: (columnId: string, updates: Partial<Column>) => void;
@@ -48,6 +48,8 @@ export function BoardColumn({
 }: BoardColumnProps) {
   const [isAddingTask, setIsAddingTask] = useState(false);
   const [newTaskTitle, setNewTaskTitle] = useState("");
+  const [newTaskPriority, setNewTaskPriority] = useState<string>("medium");
+  const [newLabel, setNewLabel] = useState("");
   const [isEditingTitle, setIsEditingTitle] = useState(false);
   const [editTitle, setEditTitle] = useState(column.title);
 
@@ -59,8 +61,10 @@ export function BoardColumn({
 
   const handleAddTask = () => {
     if (!newTaskTitle.trim()) return;
-    onAddTask(column.id, newTaskTitle.trim());
+    onAddTask(column.id, newTaskTitle.trim(), newTaskPriority, newLabel.trim() || undefined);
     setNewTaskTitle("");
+    setNewTaskPriority("medium");
+    setNewLabel("");
     setIsAddingTask(false);
   };
 
@@ -202,22 +206,42 @@ export function BoardColumn({
       {/* Add Task Form */}
       <div className="px-2 pb-2">
         {isAddingTask ? (
-          <div className="space-y-2 p-2 rounded-lg bg-background/50 border border-border/30">
-            <Input
-              placeholder="Task title..."
-              value={newTaskTitle}
-              onChange={(e) => setNewTaskTitle(e.target.value)}
-              onKeyDown={(e) => {
-                if (e.key === "Enter") handleAddTask();
-                if (e.key === "Escape") {
-                  setIsAddingTask(false);
-                  setNewTaskTitle("");
-                }
-              }}
-              className="h-8 text-sm bg-transparent"
-              autoFocus
-            />
-            <div className="flex gap-1">
+          <div className="space-y-3 p-3 rounded-lg bg-background/50 border border-border/30 shadow-sm">
+            <div className="space-y-2">
+              <Input
+                placeholder="Task title..."
+                value={newTaskTitle}
+                onChange={(e) => setNewTaskTitle(e.target.value)}
+                onKeyDown={(e) => {
+                  if (e.key === "Enter") handleAddTask();
+                  if (e.key === "Escape") {
+                    setIsAddingTask(false);
+                    setNewTaskTitle("");
+                  }
+                }}
+                className="h-8 text-sm bg-background/80"
+                autoFocus
+              />
+              <div className="flex items-center gap-2">
+                <select
+                  value={newTaskPriority}
+                  onChange={(e) => setNewTaskPriority(e.target.value)}
+                  className="h-7 text-xs bg-background/80 border border-border rounded-md px-2 py-1 outline-none text-muted-foreground w-[100px]"
+                >
+                  <option value="low">Low Priority</option>
+                  <option value="medium">Medium Priority</option>
+                  <option value="high">High Priority</option>
+                </select>
+                <Input
+                  placeholder="Label (optional)"
+                  value={newLabel}
+                  onChange={(e) => setNewLabel(e.target.value)}
+                  className="h-7 text-xs bg-background/80 flex-1"
+                />
+              </div>
+            </div>
+            
+            <div className="flex gap-2">
               <Button
                 size="sm"
                 className="h-7 text-xs flex-1"
@@ -229,10 +253,12 @@ export function BoardColumn({
               <Button
                 variant="ghost"
                 size="sm"
-                className="h-7 text-xs"
+                className="h-7 text-xs flex-1"
                 onClick={() => {
                   setIsAddingTask(false);
                   setNewTaskTitle("");
+                  setNewTaskPriority("medium");
+                  setNewLabel("");
                 }}
               >
                 Cancel

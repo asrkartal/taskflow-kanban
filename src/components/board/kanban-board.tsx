@@ -210,7 +210,7 @@ export function KanbanBoard({
   // ============================================================
 
   const handleAddTask = useCallback(
-    async (columnId: string, title: string) => {
+    async (columnId: string, title: string, priority: string = "medium", label?: string) => {
       const column = columns.find((c) => c.id === columnId);
       if (!column) return;
 
@@ -224,8 +224,8 @@ export function KanbanBoard({
         title,
         description: null,
         position,
-        priority: "medium",
-        label: null,
+        priority: priority as any,
+        label: label || null,
       };
 
       setColumns((prev) =>
@@ -243,7 +243,8 @@ export function KanbanBoard({
             column_id: columnId,
             title,
             position,
-            priority: "medium",
+            priority,
+            label: label || null,
           })
           .select()
           .single();
