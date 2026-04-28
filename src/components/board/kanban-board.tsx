@@ -343,16 +343,26 @@ export function KanbanBoard({
       );
 
       try {
+        // Remove relational fields that are not columns in the tasks table
+        const { checklist_items, comments, ...dbUpdates } = updates;
+
+        // If there are no actual fields to update on the task row itself, skip DB call
+        if (Object.keys(dbUpdates).length === 0) return;
+
         const { error } = await supabase
           .from("tasks")
           .update({
-            ...updates,
+            ...dbUpdates,
             updated_at: new Date().toISOString(),
           })
           .eq("id", taskId);
 
-        if (error) throw error;
-      } catch {
+        if (error) {
+          console.error("Supabase update error:", error);
+          throw error;
+        }
+      } catch (err) {
+        console.error(err);
         toast.error("Failed to update task");
         setColumns(initialColumns);
       }
