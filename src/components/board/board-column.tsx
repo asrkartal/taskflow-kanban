@@ -232,7 +232,7 @@ export function BoardColumn({
               <div className="flex items-center gap-2">
                 <Select
                   value={newTaskPriority}
-                  onValueChange={setNewTaskPriority}
+                  onValueChange={(val) => { if (val) setNewTaskPriority(val); }}
                 >
                   <SelectTrigger className="h-7 text-xs bg-background/80 border-border w-[120px]">
                     <SelectValue placeholder="Priority" />
