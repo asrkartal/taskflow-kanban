@@ -31,17 +31,23 @@ export default async function BoardPage({ params }: BoardPageProps) {
     data: { user },
   } = await supabase.auth.getUser();
 
-  if (!user) redirect("/login");
-
-  // Fetch board
+  // Fetch board without enforcing user_id yet
   const { data: board } = await supabase
     .from("boards")
     .select("*")
     .eq("id", boardId)
-    .eq("user_id", user.id)
     .single();
 
   if (!board) redirect("/dashboard");
+
+  // Determine permissions
+  const isOwner = user && board.user_id === user.id;
+  
+  if (!board.is_public && !isOwner) {
+    redirect("/login");
+  }
+
+  const isReadOnly = !isOwner;
 
   // Fetch columns with tasks
   const { data: columns } = await supabase
@@ -95,6 +101,8 @@ export default async function BoardPage({ params }: BoardPageProps) {
       boardId={boardId}
       boardTitle={board.title}
       initialColumns={columnsWithTasks}
+      isReadOnly={isReadOnly}
+      isPublic={board.is_public}
     />
   );
 }

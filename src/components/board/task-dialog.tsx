@@ -51,6 +51,7 @@ interface TaskDialogProps {
   onOpenChange: (open: boolean) => void;
   onUpdate: (taskId: string, updates: Partial<Task>) => void;
   onDelete: (taskId: string) => void;
+  isReadOnly?: boolean;
 }
 
 const priorityOptions: { value: TaskPriority; label: string; icon: React.ElementType; color: string }[] = [
@@ -65,6 +66,7 @@ export function TaskDialog({
   onOpenChange,
   onUpdate,
   onDelete,
+  isReadOnly = false,
 }: TaskDialogProps) {
   const supabase = createClient();
   const [isEditingTitle, setIsEditingTitle] = useState(false);
@@ -311,11 +313,14 @@ export function TaskDialog({
                 </div>
               ) : (
                 <DialogTitle
-                  className="text-lg font-semibold cursor-pointer hover:text-primary/80 transition-colors flex items-center gap-2 group"
-                  onClick={() => setIsEditingTitle(true)}
+                  className={cn(
+                    "text-lg font-semibold transition-colors flex items-center gap-2 group",
+                    !isReadOnly && "cursor-pointer hover:text-primary/80"
+                  )}
+                  onClick={() => !isReadOnly && setIsEditingTitle(true)}
                 >
                   {task.title}
-                  <Pencil className="h-3.5 w-3.5 opacity-0 group-hover:opacity-50 transition-opacity" />
+                  {!isReadOnly && <Pencil className="h-3.5 w-3.5 opacity-0 group-hover:opacity-50 transition-opacity" />}
                 </DialogTitle>
               )}
             </div>
@@ -331,21 +336,35 @@ export function TaskDialog({
                 <Label className="text-xs text-muted-foreground font-medium flex items-center gap-1.5">
                   <AlertCircle className="h-3 w-3" /> Priority
                 </Label>
-                <Select value={task.priority} onValueChange={handlePriorityChange}>
-                  <SelectTrigger className="w-[120px] h-8 text-xs bg-background/50">
-                    <SelectValue />
-                  </SelectTrigger>
-                  <SelectContent>
-                    {priorityOptions.map((opt) => (
-                      <SelectItem key={opt.value} value={opt.value}>
-                        <div className="flex items-center gap-1.5">
+                {isReadOnly ? (
+                  <div className="flex items-center gap-1.5 h-8 px-3 rounded-md border border-border/50 bg-background/30 text-xs">
+                    {(() => {
+                      const opt = priorityOptions.find(o => o.value === task.priority) || priorityOptions[1];
+                      return (
+                        <>
                           <opt.icon className={cn("h-3 w-3", opt.color)} />
                           {opt.label}
-                        </div>
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
+                        </>
+                      );
+                    })()}
+                  </div>
+                ) : (
+                  <Select value={task.priority} onValueChange={handlePriorityChange}>
+                    <SelectTrigger className="w-[120px] h-8 text-xs bg-background/50">
+                      <SelectValue />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {priorityOptions.map((opt) => (
+                        <SelectItem key={opt.value} value={opt.value}>
+                          <div className="flex items-center gap-1.5">
+                            <opt.icon className={cn("h-3 w-3", opt.color)} />
+                            {opt.label}
+                          </div>
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                )}
               </div>
 
               {/* Label */}
@@ -353,7 +372,7 @@ export function TaskDialog({
                 <Label className="text-xs text-muted-foreground font-medium flex items-center gap-1.5">
                   <Tag className="h-3 w-3" /> Label
                 </Label>
-                {isEditingLabel ? (
+                {isEditingLabel && !isReadOnly ? (
                   <div className="flex items-center gap-1">
                     <Input
                       value={label}
@@ -371,8 +390,13 @@ export function TaskDialog({
                     </Button>
                   </div>
                 ) : (
-                  <Button variant="outline" size="sm" className="h-8 text-xs bg-background/50" onClick={() => setIsEditingLabel(true)}>
-                    {task.label ? <Badge variant="secondary" className="text-[10px]">{task.label}</Badge> : "Add label"}
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    className={cn("h-8 text-xs bg-background/50", isReadOnly && "pointer-events-none border-border/50 bg-background/30")}
+                    onClick={() => !isReadOnly && setIsEditingLabel(true)}
+                  >
+                    {task.label ? <Badge variant="secondary" className="text-[10px]">{task.label}</Badge> : (isReadOnly ? "No label" : "Add label")}
                   </Button>
                 )}
               </div>
@@ -386,7 +410,8 @@ export function TaskDialog({
                   type="date"
                   value={dueDate ? dueDate.split("T")[0] : ""}
                   onChange={handleDueDateChange}
-                  className="h-8 text-xs w-[140px] bg-background/50"
+                  className={cn("h-8 text-xs w-[140px] bg-background/50", isReadOnly && "opacity-70")}
+                  disabled={isReadOnly}
                 />
               </div>
 
@@ -395,7 +420,7 @@ export function TaskDialog({
                 <Label className="text-xs text-muted-foreground font-medium flex items-center gap-1.5">
                   <User className="h-3 w-3" /> Assignee
                 </Label>
-                {isEditingAssignee ? (
+                {isEditingAssignee && !isReadOnly ? (
                   <div className="flex items-center gap-1">
                     <Input
                       value={assignee}
@@ -413,7 +438,12 @@ export function TaskDialog({
                     </Button>
                   </div>
                 ) : (
-                  <Button variant="outline" size="sm" className="h-8 text-xs bg-background/50" onClick={() => setIsEditingAssignee(true)}>
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    className={cn("h-8 text-xs bg-background/50", isReadOnly && "pointer-events-none border-border/50 bg-background/30")}
+                    onClick={() => !isReadOnly && setIsEditingAssignee(true)}
+                  >
                     {task.assignee ? (
                       <div className="flex items-center gap-1.5">
                         <div className="h-5 w-5 rounded-full bg-primary/20 text-primary flex items-center justify-center text-[10px] font-bold">
@@ -421,7 +451,7 @@ export function TaskDialog({
                         </div>
                         <span className="text-xs">{task.assignee}</span>
                       </div>
-                    ) : "Assign"}
+                    ) : (isReadOnly ? "Unassigned" : "Assign")}
                   </Button>
                 )}
               </div>
@@ -444,12 +474,12 @@ export function TaskDialog({
             {/* Description */}
             <div className="space-y-2">
               <Label className="text-sm font-medium">Description</Label>
-              {isEditingDesc ? (
+              {isEditingDesc && !isReadOnly ? (
                 <div className="space-y-2">
                   <Textarea
                     value={description}
                     onChange={(e) => setDescription(e.target.value)}
-                    placeholder="Add a more detailed description..."
+                    placeholder="Add a detailed description..."
                     className="min-h-[100px] text-sm bg-background/50 resize-none"
                     autoFocus
                   />
@@ -461,12 +491,12 @@ export function TaskDialog({
               ) : (
                 <div
                   className={cn(
-                    "rounded-lg p-3 text-sm cursor-pointer transition-colors min-h-[60px]",
-                    task.description ? "bg-background/30 hover:bg-background/50" : "bg-background/20 hover:bg-background/40 text-muted-foreground"
+                    "rounded-lg p-3 text-sm transition-colors min-h-[60px] whitespace-pre-wrap",
+                    task.description ? (isReadOnly ? "bg-background/20" : "bg-background/30 hover:bg-background/50 cursor-pointer") : (isReadOnly ? "text-muted-foreground" : "bg-background/20 hover:bg-background/40 text-muted-foreground cursor-pointer")
                   )}
-                  onClick={() => setIsEditingDesc(true)}
+                  onClick={() => !isReadOnly && setIsEditingDesc(true)}
                 >
-                  {task.description || "Click to add a description..."}
+                  {task.description || (isReadOnly ? "No description provided." : "Click to add a description...")}
                 </div>
               )}
             </div>
@@ -493,36 +523,41 @@ export function TaskDialog({
                   <div key={item.id} className="flex items-center gap-2 group rounded-md px-2 py-1.5 hover:bg-background/30 transition-colors">
                     <Checkbox
                       checked={item.is_completed}
-                      onCheckedChange={(checked) => handleToggleChecklistItem(item.id, !!checked)}
+                      onCheckedChange={(checked) => !isReadOnly && handleToggleChecklistItem(item.id, !!checked)}
+                      disabled={isReadOnly}
                       className="h-4 w-4"
                     />
                     <span className={cn("text-sm flex-1", item.is_completed && "line-through text-muted-foreground")}>
                       {item.title}
                     </span>
-                    <Button
-                      variant="ghost"
-                      size="icon"
-                      className="h-6 w-6 opacity-0 group-hover:opacity-100 transition-opacity"
-                      onClick={() => handleDeleteChecklistItem(item.id)}
-                    >
-                      <X className="h-3 w-3" />
-                    </Button>
+                    {!isReadOnly && (
+                      <Button
+                        variant="ghost"
+                        size="icon"
+                        className="h-6 w-6 opacity-0 group-hover:opacity-100 transition-opacity"
+                        onClick={() => handleDeleteChecklistItem(item.id)}
+                      >
+                        <X className="h-3 w-3" />
+                      </Button>
+                    )}
                   </div>
                 ))}
               </div>
 
-              <div className="flex items-center gap-2">
-                <Input
-                  placeholder="Add an item..."
-                  value={newChecklistItem}
-                  onChange={(e) => setNewChecklistItem(e.target.value)}
-                  onKeyDown={(e) => { if (e.key === "Enter") handleAddChecklistItem(); }}
-                  className="h-7 text-xs bg-background/40 flex-1"
-                />
-                <Button size="sm" className="h-7 text-xs px-2" onClick={handleAddChecklistItem} disabled={!newChecklistItem.trim()}>
-                  <Plus className="h-3 w-3" />
-                </Button>
-              </div>
+              {!isReadOnly && (
+                <div className="flex items-center gap-2">
+                  <Input
+                    placeholder="Add an item..."
+                    value={newChecklistItem}
+                    onChange={(e) => setNewChecklistItem(e.target.value)}
+                    onKeyDown={(e) => { if (e.key === "Enter") handleAddChecklistItem(); }}
+                    className="h-7 text-xs bg-background/40 flex-1"
+                  />
+                  <Button size="sm" className="h-7 text-xs px-2" onClick={handleAddChecklistItem} disabled={!newChecklistItem.trim()}>
+                    <Plus className="h-3 w-3" />
+                  </Button>
+                </div>
+              )}
             </div>
 
             <Separator className="opacity-30" />
@@ -537,23 +572,25 @@ export function TaskDialog({
               </Label>
 
               {/* New comment input */}
-              <div className="flex items-start gap-2">
-                <div className="h-7 w-7 rounded-full bg-primary/20 text-primary flex items-center justify-center text-[10px] font-bold shrink-0 mt-0.5">
-                  {currentUserEmail ? currentUserEmail.charAt(0).toUpperCase() : "U"}
+              {!isReadOnly && (
+                <div className="flex items-start gap-2">
+                  <div className="h-7 w-7 rounded-full bg-primary/20 text-primary flex items-center justify-center text-[10px] font-bold shrink-0 mt-0.5">
+                    {currentUserEmail ? currentUserEmail.charAt(0).toUpperCase() : "U"}
+                  </div>
+                  <div className="flex-1 flex gap-1.5">
+                    <Input
+                      placeholder="Write a comment..."
+                      value={newComment}
+                      onChange={(e) => setNewComment(e.target.value)}
+                      onKeyDown={(e) => { if (e.key === "Enter") handleAddComment(); }}
+                      className="h-8 text-xs bg-background/40 flex-1"
+                    />
+                    <Button size="sm" className="h-8 px-2.5" onClick={handleAddComment} disabled={!newComment.trim()}>
+                      <Send className="h-3.5 w-3.5" />
+                    </Button>
+                  </div>
                 </div>
-                <div className="flex-1 flex gap-1.5">
-                  <Input
-                    placeholder="Write a comment..."
-                    value={newComment}
-                    onChange={(e) => setNewComment(e.target.value)}
-                    onKeyDown={(e) => { if (e.key === "Enter") handleAddComment(); }}
-                    className="h-8 text-xs bg-background/40 flex-1"
-                  />
-                  <Button size="sm" className="h-8 px-2.5" onClick={handleAddComment} disabled={!newComment.trim()}>
-                    <Send className="h-3.5 w-3.5" />
-                  </Button>
-                </div>
-              </div>
+              )}
 
               {/* Comments list */}
               {comments.length > 0 && (
@@ -572,7 +609,7 @@ export function TaskDialog({
                         </div>
                         <p className="text-xs text-foreground/80 mt-0.5 whitespace-pre-wrap">{cmt.content}</p>
                       </div>
-                      {cmt.user_id === currentUserId && (
+                      {!isReadOnly && cmt.user_id === currentUserId && (
                         <Button
                           variant="ghost"
                           size="icon"
@@ -591,11 +628,13 @@ export function TaskDialog({
             <Separator className="opacity-30" />
 
             {/* Actions */}
-            <div className="flex justify-end">
-              <Button variant="destructive" size="sm" className="h-8 text-xs" onClick={handleDelete}>
-                <Trash2 className="h-3.5 w-3.5 mr-1.5" /> Delete Task
-              </Button>
-            </div>
+            {!isReadOnly && (
+              <div className="flex justify-end">
+                <Button variant="destructive" size="sm" className="h-8 text-xs" onClick={handleDelete}>
+                  <Trash2 className="h-3.5 w-3.5 mr-1.5" /> Delete Task
+                </Button>
+              </div>
+            )}
           </div>
         </ScrollArea>
       </DialogContent>

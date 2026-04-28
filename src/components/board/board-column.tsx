@@ -45,6 +45,7 @@ interface BoardColumnProps {
   onDeleteTask: (taskId: string) => void;
   onUpdateColumn: (columnId: string, updates: Partial<Column>) => void;
   onDeleteColumn: (columnId: string) => void;
+  isReadOnly?: boolean;
 }
 
 export function BoardColumn({
@@ -55,6 +56,7 @@ export function BoardColumn({
   onDeleteTask,
   onUpdateColumn,
   onDeleteColumn,
+  isReadOnly = false,
 }: BoardColumnProps) {
   const [isAddingTask, setIsAddingTask] = useState(false);
   const [newTaskTitle, setNewTaskTitle] = useState("");
@@ -119,14 +121,16 @@ export function BoardColumn({
       {/* Column Header */}
       <div className="flex items-center justify-between px-3 py-2.5">
         <div className="flex items-center gap-1 flex-1 min-w-0">
-          <button
-            {...attributes}
-            {...listeners}
-            className="cursor-grab active:cursor-grabbing p-0.5 rounded hover:bg-accent/50 text-muted-foreground/40 hover:text-muted-foreground transition-colors shrink-0"
-          >
-            <GripVertical className="h-4 w-4" />
-          </button>
-          {isEditingTitle ? (
+          {!isReadOnly && (
+            <button
+              {...attributes}
+              {...listeners}
+              className="cursor-grab active:cursor-grabbing p-0.5 rounded hover:bg-accent/50 text-muted-foreground/40 hover:text-muted-foreground transition-colors shrink-0"
+            >
+              <GripVertical className="h-4 w-4" />
+            </button>
+          )}
+          {isEditingTitle && !isReadOnly ? (
             <div className="flex items-center gap-1 flex-1">
               <Input
                 value={editTitle}
@@ -138,74 +142,48 @@ export function BoardColumn({
                     setEditTitle(column.title);
                   }
                 }}
-                className="h-7 text-sm font-semibold bg-transparent border-primary/30"
+                className="h-7 px-2 text-sm font-semibold flex-1"
                 autoFocus
               />
-              <Button
-                variant="ghost"
-                size="icon"
-                className="h-6 w-6 shrink-0"
-                onClick={handleSaveTitle}
-              >
-                <Check className="h-3 w-3" />
-              </Button>
-              <Button
-                variant="ghost"
-                size="icon"
-                className="h-6 w-6 shrink-0"
-                onClick={() => {
-                  setIsEditingTitle(false);
-                  setEditTitle(column.title);
-                }}
-              >
-                <X className="h-3 w-3" />
-              </Button>
             </div>
           ) : (
-            <>
-              <h3 className="text-sm font-semibold truncate">{column.title}</h3>
-              <span className="text-xs text-muted-foreground bg-muted/50 px-1.5 py-0.5 rounded-md shrink-0">
-                {tasks.length}
-              </span>
-            </>
+            <h3
+              className={cn(
+                "font-semibold text-sm truncate px-1",
+                !isReadOnly && "cursor-pointer hover:bg-accent/50 rounded transition-colors"
+              )}
+              onClick={() => !isReadOnly && setIsEditingTitle(true)}
+            >
+              {column.title}
+            </h3>
           )}
+          <span className="ml-2 text-xs font-medium text-muted-foreground/80 bg-muted/50 px-2 py-0.5 rounded-full shrink-0">
+            {tasks.length}
+          </span>
         </div>
 
-        {!isEditingTitle && (
-          <div className="flex items-center gap-0.5 shrink-0">
-            <Button
-              variant="ghost"
-              size="icon"
-              className="h-7 w-7 hover:bg-accent"
-              onClick={() => setIsAddingTask(true)}
-            >
-              <Plus className="h-4 w-4" />
-            </Button>
-
-            <DropdownMenu>
-              <DropdownMenuTrigger
-                className="h-7 w-7 inline-flex items-center justify-center rounded-md hover:bg-accent cursor-pointer"
+        {!isReadOnly && (
+          <DropdownMenu>
+            <DropdownMenuTrigger className="h-7 w-7 inline-flex items-center justify-center rounded-md hover:bg-accent text-muted-foreground hover:text-foreground shrink-0 ml-1 cursor-pointer">
+              <MoreHorizontal className="h-4 w-4" />
+            </DropdownMenuTrigger>
+            <DropdownMenuContent align="end" className="w-40">
+              <DropdownMenuItem
+                onClick={() => setIsEditingTitle(true)}
+                className="gap-2 cursor-pointer"
               >
-                <MoreHorizontal className="h-4 w-4" />
-              </DropdownMenuTrigger>
-              <DropdownMenuContent align="end" className="w-40">
-                <DropdownMenuItem
-                  onClick={() => setIsEditingTitle(true)}
-                  className="cursor-pointer"
-                >
-                  <Pencil className="mr-2 h-3.5 w-3.5" />
-                  Rename
-                </DropdownMenuItem>
-                <DropdownMenuItem
-                  onClick={() => onDeleteColumn(column.id)}
-                  className="cursor-pointer text-destructive focus:text-destructive"
-                >
-                  <Trash2 className="mr-2 h-3.5 w-3.5" />
-                  Delete
-                </DropdownMenuItem>
-              </DropdownMenuContent>
-            </DropdownMenu>
-          </div>
+                <Pencil className="h-4 w-4" />
+                Rename
+              </DropdownMenuItem>
+              <DropdownMenuItem
+                onClick={() => onDeleteColumn(column.id)}
+                className="text-destructive focus:text-destructive gap-2 cursor-pointer"
+              >
+                <Trash2 className="h-4 w-4" />
+                Delete
+              </DropdownMenuItem>
+            </DropdownMenuContent>
+          </DropdownMenu>
         )}
       </div>
 
@@ -225,6 +203,7 @@ export function BoardColumn({
                 task={task}
                 onUpdate={onUpdateTask}
                 onDelete={onDeleteTask}
+                isReadOnly={isReadOnly}
               />
             ))}
           </SortableContext>
@@ -237,9 +216,20 @@ export function BoardColumn({
         </div>
       </ScrollArea>
 
-      {/* Add Task Form */}
-      <div className="px-2 pb-2">
-        {isAddingTask ? (
+      {/* Column Footer / Add Task */}
+      <div className="p-2 border-t border-border/20 bg-background/30 rounded-b-xl mt-auto shrink-0">
+        {!isAddingTask ? (
+          !isReadOnly && (
+            <Button
+              variant="ghost"
+              className="w-full justify-start text-muted-foreground hover:text-foreground h-9 font-medium"
+              onClick={() => setIsAddingTask(true)}
+            >
+              <Plus className="h-4 w-4 mr-2" />
+              Add a task
+            </Button>
+          )
+        ) : (
           <div className="space-y-3 p-3 rounded-lg bg-background/50 border border-border/30 shadow-sm">
             <div className="space-y-2">
               <Input
@@ -303,15 +293,6 @@ export function BoardColumn({
               </Button>
             </div>
           </div>
-        ) : (
-          <Button
-            variant="ghost"
-            className="w-full h-8 text-xs text-muted-foreground hover:text-foreground justify-start"
-            onClick={() => setIsAddingTask(true)}
-          >
-            <Plus className="h-3.5 w-3.5 mr-1" />
-            Add a task
-          </Button>
         )}
       </div>
     </div>

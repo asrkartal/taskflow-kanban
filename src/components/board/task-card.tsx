@@ -20,6 +20,7 @@ interface TaskCardProps {
   task: Task;
   onUpdate: (taskId: string, updates: Partial<Task>) => void;
   onDelete: (taskId: string) => void;
+  isReadOnly?: boolean;
 }
 
 const priorityConfig = {
@@ -77,6 +78,7 @@ export const TaskCard = memo(function TaskCard({
   task,
   onUpdate,
   onDelete,
+  isReadOnly = false,
 }: TaskCardProps) {
   const [isDialogOpen, setIsDialogOpen] = useState(false);
 
@@ -89,6 +91,7 @@ export const TaskCard = memo(function TaskCard({
     isDragging,
   } = useSortable({
     id: task.id,
+    disabled: isReadOnly,
   });
 
   const style = {
@@ -115,11 +118,12 @@ export const TaskCard = memo(function TaskCard({
       <div
         ref={setNodeRef}
         style={style}
-        {...attributes}
-        {...listeners}
+        {...(isReadOnly ? {} : attributes)}
+        {...(isReadOnly ? {} : listeners)}
         className={cn(
-          "group rounded-lg border border-border/40 bg-card p-3 cursor-grab active:cursor-grabbing task-card-transition touch-none",
-          "hover:border-primary/20 hover:shadow-md",
+          "group rounded-lg border border-border/40 bg-card p-3 task-card-transition touch-none",
+          !isReadOnly && "cursor-grab active:cursor-grabbing hover:border-primary/20 hover:shadow-md",
+          isReadOnly && "cursor-pointer hover:border-primary/10",
           isDragging && "opacity-40 rotate-2 scale-105 shadow-2xl z-50"
         )}
         onClick={() => setIsDialogOpen(true)}
@@ -195,6 +199,7 @@ export const TaskCard = memo(function TaskCard({
         onOpenChange={setIsDialogOpen}
         onUpdate={onUpdate}
         onDelete={onDelete}
+        isReadOnly={isReadOnly}
       />
     </>
   );

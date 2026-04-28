@@ -25,23 +25,31 @@ import { AddColumnForm } from "./add-column-form";
 import type { Column, Task } from "@/types";
 import { getPositionAtIndex, getEndPosition } from "@/lib/sorting";
 import { toast } from "sonner";
+import { Switch } from "@/components/ui/switch";
+import { Label } from "@/components/ui/label";
+import { Globe, Lock } from "lucide-react";
 
 interface KanbanBoardProps {
   boardId: string;
   boardTitle: string;
   initialColumns: (Column & { tasks: Task[] })[];
+  isReadOnly?: boolean;
+  isPublic?: boolean;
 }
 
 export function KanbanBoard({
   boardId,
   boardTitle,
   initialColumns,
+  isReadOnly = false,
+  isPublic = false,
 }: KanbanBoardProps) {
   const [columns, setColumns] = useState<(Column & { tasks: Task[] })[]>(
     initialColumns
   );
   const [activeTask, setActiveTask] = useState<Task | null>(null);
   const [activeColumn, setActiveColumn] = useState<(Column & { tasks: Task[] }) | null>(null);
+  const [isPublicState, setIsPublicState] = useState(isPublic);
   const supabase = createClient();
   const scrollContainerRef = useRef<HTMLDivElement>(null);
 
@@ -501,6 +509,19 @@ export function KanbanBoard({
     [columns, supabase]
   );
 
+  const togglePublic = async () => {
+    const newVal = !isPublicState;
+    setIsPublicState(newVal);
+    try {
+      const { error } = await supabase.from("boards").update({ is_public: newVal }).eq("id", boardId);
+      if (error) throw error;
+      toast.success(newVal ? "Board is now public" : "Board is now private");
+    } catch {
+      toast.error("Failed to update board privacy");
+      setIsPublicState(!newVal);
+    }
+  };
+
   return (
     <div className="h-full flex flex-col">
       {/* Board Header */}
@@ -510,7 +531,27 @@ export function KanbanBoard({
           <span className="text-xs text-muted-foreground bg-muted px-2 py-0.5 rounded-full">
             {columns.length} columns
           </span>
+          {isReadOnly && (
+            <span className="text-[10px] uppercase font-bold bg-primary/10 text-primary px-2 py-0.5 rounded border border-primary/20">
+              Read-Only
+            </span>
+          )}
         </div>
+
+        {!isReadOnly && (
+          <div className="flex items-center gap-2 bg-background/50 border border-border/50 px-3 py-1.5 rounded-full">
+            {isPublicState ? <Globe className="h-4 w-4 text-emerald-500" /> : <Lock className="h-4 w-4 text-muted-foreground" />}
+            <Label htmlFor="public-toggle" className="text-xs font-medium cursor-pointer">
+              {isPublicState ? "Public" : "Private"}
+            </Label>
+            <Switch
+              id="public-toggle"
+              checked={isPublicState}
+              onCheckedChange={togglePublic}
+              className="scale-75 origin-right"
+            />
+          </div>
+        )}
       </div>
 
       {/* Board Content */}
@@ -519,11 +560,11 @@ export function KanbanBoard({
         className="flex-1 overflow-x-auto overflow-y-hidden p-4 md:p-6 snap-scroll custom-scrollbar board-pattern"
       >
         <DndContext
-          sensors={sensors}
+          sensors={isReadOnly ? [] : sensors}
           collisionDetection={closestCorners}
-          onDragStart={handleDragStart}
-          onDragOver={handleDragOver}
-          onDragEnd={handleDragEnd}
+          onDragStart={isReadOnly ? undefined : handleDragStart}
+          onDragOver={isReadOnly ? undefined : handleDragOver}
+          onDragEnd={isReadOnly ? undefined : handleDragEnd}
         >
           <div className="flex gap-4 h-full items-start">
             <SortableContext
@@ -540,11 +581,12 @@ export function KanbanBoard({
                   onDeleteTask={handleDeleteTask}
                   onUpdateColumn={handleUpdateColumn}
                   onDeleteColumn={handleDeleteColumn}
+                  isReadOnly={isReadOnly}
                 />
               ))}
             </SortableContext>
 
-            <AddColumnForm onAdd={handleAddColumn} />
+            {!isReadOnly && <AddColumnForm onAdd={handleAddColumn} />}
           </div>
 
           <DragOverlay dropAnimation={null}>
