@@ -178,7 +178,9 @@ export function TaskDialog({
       is_completed: false,
       position,
     };
-    setChecklistItems(prev => [...prev, newItem]);
+    const newItems = [...checklistItems, newItem];
+    setChecklistItems(newItems);
+    onUpdate(task.id, { checklist_items: newItems });
     setNewChecklistItem("");
 
     try {
@@ -188,17 +190,21 @@ export function TaskDialog({
         .select()
         .single();
       if (error) throw error;
-      setChecklistItems(prev => prev.map(i => i.id === tempId ? data : i));
+      const verifiedItems = newItems.map(i => i.id === tempId ? data : i);
+      setChecklistItems(verifiedItems);
+      onUpdate(task.id, { checklist_items: verifiedItems });
     } catch {
       toast.error("Failed to add checklist item");
-      setChecklistItems(prev => prev.filter(i => i.id !== tempId));
+      const rollback = newItems.filter(i => i.id !== tempId);
+      setChecklistItems(rollback);
+      onUpdate(task.id, { checklist_items: rollback });
     }
-  }, [newChecklistItem, checklistItems.length, task.id, supabase]);
+  }, [newChecklistItem, checklistItems, task.id, supabase, onUpdate]);
 
   const handleToggleChecklistItem = async (itemId: string, completed: boolean) => {
-    setChecklistItems(prev =>
-      prev.map(i => i.id === itemId ? { ...i, is_completed: completed } : i)
-    );
+    const newItems = checklistItems.map(i => i.id === itemId ? { ...i, is_completed: completed } : i);
+    setChecklistItems(newItems);
+    onUpdate(task.id, { checklist_items: newItems });
     try {
       const { error } = await supabase
         .from("checklist_items")
@@ -211,7 +217,9 @@ export function TaskDialog({
   };
 
   const handleDeleteChecklistItem = async (itemId: string) => {
-    setChecklistItems(prev => prev.filter(i => i.id !== itemId));
+    const newItems = checklistItems.filter(i => i.id !== itemId);
+    setChecklistItems(newItems);
+    onUpdate(task.id, { checklist_items: newItems });
     try {
       await supabase.from("checklist_items").delete().eq("id", itemId);
     } catch {

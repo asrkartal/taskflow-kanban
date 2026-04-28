@@ -64,12 +64,19 @@ export default async function BoardPage({ params }: BoardPageProps) {
     assignee: string | null;
     created_at: string;
     updated_at: string;
+    checklist_items?: Array<{
+      id: string;
+      task_id: string;
+      title: string;
+      is_completed: boolean;
+      position: number;
+    }>;
   }> = [];
 
   if (columnIds.length > 0) {
     const { data } = await supabase
       .from("tasks")
-      .select("*")
+      .select("*, checklist_items(*)")
       .in("column_id", columnIds)
       .order("position", { ascending: true });
     tasks = data || [];
