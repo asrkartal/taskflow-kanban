@@ -16,7 +16,6 @@ import {
   DropdownMenuItem,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
-import {
   Plus,
   MoreHorizontal,
   Trash2,
@@ -24,6 +23,13 @@ import {
   X,
   Check,
 } from "lucide-react";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 import type { Column, Task } from "@/types";
 import { cn } from "@/lib/utils";
 
@@ -223,15 +229,19 @@ export function BoardColumn({
                 autoFocus
               />
               <div className="flex items-center gap-2">
-                <select
+                <Select
                   value={newTaskPriority}
-                  onChange={(e) => setNewTaskPriority(e.target.value)}
-                  className="h-7 text-xs bg-background/80 border border-border rounded-md px-2 py-1 outline-none text-muted-foreground w-[100px]"
+                  onValueChange={setNewTaskPriority}
                 >
-                  <option value="low">Low Priority</option>
-                  <option value="medium">Medium Priority</option>
-                  <option value="high">High Priority</option>
-                </select>
+                  <SelectTrigger className="h-7 text-xs bg-background/80 border-border w-[120px]">
+                    <SelectValue placeholder="Priority" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="low">Low Priority</SelectItem>
+                    <SelectItem value="medium">Medium Priority</SelectItem>
+                    <SelectItem value="high">High Priority</SelectItem>
+                  </SelectContent>
+                </Select>
                 <Input
                   placeholder="Label (optional)"
                   value={newLabel}
