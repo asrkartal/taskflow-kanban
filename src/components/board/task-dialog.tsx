@@ -75,6 +75,9 @@ export function TaskDialog({
   const [isEditingDesc, setIsEditingDesc] = useState(false);
   const [label, setLabel] = useState(task.label || "");
   const [isEditingLabel, setIsEditingLabel] = useState(false);
+  const [dueDate, setDueDate] = useState(task.due_date || "");
+  const [assignee, setAssignee] = useState(task.assignee || "");
+  const [isEditingAssignee, setIsEditingAssignee] = useState(false);
 
 
 
