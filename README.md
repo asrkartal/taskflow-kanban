@@ -2,7 +2,7 @@
 
 **Live Demo:** [https://taskflow-kanban-red.vercel.app/](https://taskflow-kanban-red.vercel.app/)
 
-TaskFlow Kanban, modern iş akışlarını yönetmek için tasarlanmış, Trello esintili, şık ve son derece hızlı bir proje yönetim aracıdır. En güncel web teknolojileri ile inşa edilen bu platform, ekiplerin ve bireylerin görevlerini görsel bir hiyerarşide organize etmelerini sağlar.
+TaskFlow Kanban, modern iş akışlarını yönetmek için tasarlanmış, Trello esintili, şık ve son derece hızlı bir proje yönetim aracıdır.
 
 ---
 
