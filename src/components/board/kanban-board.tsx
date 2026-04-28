@@ -44,6 +44,10 @@ export function KanbanBoard({
   const supabase = createClient();
   const scrollContainerRef = useRef<HTMLDivElement>(null);
 
+  // Keep a ref to the latest columns to prevent stale closures in drag handlers
+  const columnsRef = useRef(columns);
+  columnsRef.current = columns;
+
   // Sensors for drag & drop (pointer + touch + keyboard)
   const sensors = useSensors(
     useSensor(PointerSensor, {
@@ -66,191 +70,140 @@ export function KanbanBoard({
     [columns]
   );
 
-  // Find which column contains a task
-  const findColumnByTaskId = useCallback(
-    (taskId: string) => {
-      return columns.find((col) =>
-        col.tasks.some((task) => task.id === taskId)
-      );
-    },
-    [columns]
-  );
+  // Find which column contains a task using the REF (always latest state)
+  const findColumnByTaskId = useCallback((taskId: string) => {
+    return columnsRef.current.find((col) =>
+      col.tasks.some((task) => task.id === taskId)
+    );
+  }, []);
 
   // ============================================================
   // Drag Handlers
   // ============================================================
 
-  const handleDragStart = useCallback(
-    (event: DragStartEvent) => {
-      const { active } = event;
-      const taskId = active.id as string;
+  const handleDragStart = useCallback((event: DragStartEvent) => {
+    const { active } = event;
+    const taskId = active.id as string;
 
-      // Find the task being dragged
-      for (const col of columns) {
-        const task = col.tasks.find((t) => t.id === taskId);
-        if (task) {
-          setActiveTask(task);
-          break;
-        }
-      }
-    },
-    [columns]
-  );
+    const col = findColumnByTaskId(taskId);
+    if (col) {
+      const task = col.tasks.find((t) => t.id === taskId);
+      if (task) setActiveTask(task);
+    }
+  }, [findColumnByTaskId]);
 
-  const handleDragOver = useCallback(
-    (event: DragOverEvent) => {
-      const { active, over } = event;
-      if (!over) return;
+  const handleDragOver = useCallback((event: DragOverEvent) => {
+    const { active, over } = event;
+    if (!over) return;
 
-      const activeId = active.id as string;
-      const overId = over.id as string;
+    const activeId = active.id as string;
+    const overId = over.id as string;
 
-      // Find source and destination columns
-      const sourceCol = findColumnByTaskId(activeId);
-      let destCol = findColumnByTaskId(overId);
+    const sourceCol = findColumnByTaskId(activeId);
+    let destCol = findColumnByTaskId(overId);
 
-      // If overId is a column ID (not a task ID), it means we're dragging over an empty column
-      if (!destCol) {
-        destCol = columns.find((col) => col.id === overId);
-      }
+    if (!destCol) {
+      destCol = columnsRef.current.find((col) => col.id === overId);
+    }
 
-      if (!sourceCol || !destCol || sourceCol.id === destCol.id) return;
+    if (!sourceCol || !destCol || sourceCol.id === destCol.id) return;
 
-      // Move task from source to destination (optimistic UI)
-      setColumns((prev) => {
-        const newColumns = prev.map((col) => ({
-          ...col,
-          tasks: [...col.tasks],
-        }));
+    setColumns((prev) => {
+      const newColumns = prev.map((col) => ({ ...col, tasks: [...col.tasks] }));
+      const sourceIndex = newColumns.findIndex((c) => c.id === sourceCol.id);
+      const destIndex = newColumns.findIndex((c) => c.id === destCol.id);
 
-        const sourceIndex = newColumns.findIndex(
-          (c) => c.id === sourceCol.id
-        );
-        const destIndex = newColumns.findIndex(
-          (c) => c.id === destCol.id
-        );
+      const taskIndex = newColumns[sourceIndex].tasks.findIndex((t) => t.id === activeId);
+      if (taskIndex === -1) return prev;
 
-        // Remove task from source
-        const taskIndex = newColumns[sourceIndex].tasks.findIndex(
-          (t) => t.id === activeId
-        );
-        if (taskIndex === -1) return prev;
+      const [movedTask] = newColumns[sourceIndex].tasks.splice(taskIndex, 1);
+      const overTaskIndex = newColumns[destIndex].tasks.findIndex((t) => t.id === overId);
 
-        const [movedTask] = newColumns[sourceIndex].tasks.splice(
-          taskIndex,
-          1
-        );
-
-        // Find the index to insert in the destination
-        const overTaskIndex = newColumns[destIndex].tasks.findIndex(
-          (t) => t.id === overId
-        );
-
-        if (overTaskIndex >= 0) {
-          // Insert at the position of the over task
-          newColumns[destIndex].tasks.splice(overTaskIndex, 0, {
-            ...movedTask,
-            column_id: destCol.id,
-          });
-        } else {
-          // Insert at the end
-          newColumns[destIndex].tasks.push({
-            ...movedTask,
-            column_id: destCol.id,
-          });
-        }
-
-        return newColumns;
-      });
-    },
-    [columns, findColumnByTaskId]
-  );
-
-  const handleDragEnd = useCallback(
-    async (event: DragEndEvent) => {
-      const { active, over } = event;
-      setActiveTask(null);
-
-      if (!over) return;
-
-      const activeId = active.id as string;
-      const overId = over.id as string;
-
-      if (activeId === overId) return;
-
-      const activeCol = findColumnByTaskId(activeId);
-      if (!activeCol) return;
-
-      const tasksInCol = activeCol.tasks.filter((t) => t.id !== activeId);
-      const finalOverIndex = tasksInCol.findIndex((t) => t.id === overId);
-
-      let newPosition: number;
-      if (finalOverIndex === -1) {
-        newPosition = getEndPosition(tasksInCol);
+      if (overTaskIndex >= 0) {
+        newColumns[destIndex].tasks.splice(overTaskIndex, 0, { ...movedTask, column_id: destCol.id });
       } else {
-        newPosition = getPositionAtIndex(tasksInCol, finalOverIndex);
+        newColumns[destIndex].tasks.push({ ...movedTask, column_id: destCol.id });
       }
 
-      const activeIndex = activeCol.tasks.findIndex((t) => t.id === activeId);
-      const overIndex = activeCol.tasks.findIndex((t) => t.id === overId);
+      return newColumns;
+    });
+  }, [findColumnByTaskId]);
 
-      if (activeIndex !== -1 && overIndex !== -1 && activeIndex !== overIndex) {
-        // Reorder within the same column (optimistic UI)
-        setColumns((prev) =>
-          prev.map((col) => {
-            if (col.id !== activeCol.id) return col;
+  const handleDragEnd = useCallback(async (event: DragEndEvent) => {
+    const { active, over } = event;
+    setActiveTask(null);
 
-            const newTasks = [...col.tasks];
-            const [moved] = newTasks.splice(activeIndex, 1);
-            moved.position = newPosition;
-            newTasks.splice(overIndex, 0, moved);
+    if (!over) return;
 
-            return { ...col, tasks: newTasks };
-          })
-        );
-      } else {
-        // If it was moved between columns in handleDragOver, we still need to update position
-        setColumns((prev) =>
-          prev.map((col) => {
-            const hasTask = col.tasks.some((t) => t.id === activeId);
-            if (!hasTask) return col;
+    const activeId = active.id as string;
+    const overId = over.id as string;
 
-            return {
-              ...col,
-              tasks: col.tasks.map((t) =>
-                t.id === activeId ? { ...t, position: newPosition } : t
-              ),
-            };
-          })
-        );
+    // Use latest state from ref
+    const currentCols = columnsRef.current;
+    
+    // Find where the task ended up AFTER handleDragOver
+    const destCol = currentCols.find(col => col.tasks.some(t => t.id === activeId));
+    if (!destCol) return;
+
+    const tasksInCol = destCol.tasks.filter((t) => t.id !== activeId);
+    const finalOverIndex = tasksInCol.findIndex((t) => t.id === overId);
+
+    let newPosition: number;
+    if (finalOverIndex === -1) {
+      newPosition = getEndPosition(tasksInCol);
+    } else {
+      newPosition = getPositionAtIndex(tasksInCol, finalOverIndex);
+    }
+
+    const activeIndex = destCol.tasks.findIndex((t) => t.id === activeId);
+    const overIndex = destCol.tasks.findIndex((t) => t.id === overId);
+
+    if (activeIndex !== -1 && overIndex !== -1 && activeIndex !== overIndex) {
+      setColumns((prev) =>
+        prev.map((col) => {
+          if (col.id !== destCol.id) return col;
+          const newTasks = [...col.tasks];
+          const [moved] = newTasks.splice(activeIndex, 1);
+          moved.position = newPosition;
+          newTasks.splice(overIndex, 0, moved);
+          return { ...col, tasks: newTasks };
+        })
+      );
+    } else {
+      setColumns((prev) =>
+        prev.map((col) => {
+          const hasTask = col.tasks.some((t) => t.id === activeId);
+          if (!hasTask) return col;
+          return {
+            ...col,
+            tasks: col.tasks.map((t) =>
+              t.id === activeId ? { ...t, position: newPosition } : t
+            ),
+          };
+        })
+      );
+    }
+
+    // Persist to database using the accurate destCol.id and calculated newPosition
+    try {
+      const { error } = await supabase
+        .from("tasks")
+        .update({
+          column_id: destCol.id,
+          position: newPosition,
+          updated_at: new Date().toISOString(),
+        })
+        .eq("id", activeId);
+
+      if (error) {
+        console.error("Supabase update error:", error);
+        throw error;
       }
-
-      // Persist to database
-      try {
-        const currentCol = columns.find((col) => col.id === activeCol.id);
-        if (!currentCol) return;
-        
-        const task = currentCol.tasks.find((t) => t.id === activeId);
-        if (!task) return;
-
-        const { error } = await supabase
-          .from("tasks")
-          .update({
-            column_id: currentCol.id,
-            position: newPosition,
-            updated_at: new Date().toISOString(),
-          })
-          .eq("id", activeId);
-
-        if (error) throw error;
-      } catch {
-        toast.error("Failed to save task position");
-        // Revert to initial state
-        setColumns(initialColumns);
-      }
-    },
-    [columns, findColumnByTaskId, supabase, initialColumns]
-  );
+    } catch {
+      toast.error("Failed to save task position");
+      setColumns(initialColumns);
+    }
+  }, [supabase, initialColumns]);
 
   // ============================================================
   // Task CRUD Operations
