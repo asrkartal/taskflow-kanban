@@ -2,8 +2,6 @@
 
 TaskFlow Kanban, modern web teknolojileri ile geliştirilmiş, şık, hızlı ve kullanıcı dostu bir proje yönetim uygulamasıdır. Trello ve Jira gibi profesyonel araçların sadeliğini ve hızını hedefleyerek inşa edilmiştir.
 
-![Screenshot](public/window.svg) <!-- Eğer ekran görüntünüz varsa buraya ekleyebilirsiniz -->
-
 ## ✨ Özellikler
 
 - **Full Drag & Drop Deneyimi:** Görevleri ve sütunları özgürce sürükleyip bırakın (Powered by `@dnd-kit`).
