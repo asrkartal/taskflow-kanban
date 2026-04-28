@@ -4,8 +4,10 @@ import { useState, useMemo } from "react";
 import { useDroppable } from "@dnd-kit/core";
 import {
   SortableContext,
+  useSortable,
   verticalListSortingStrategy,
 } from "@dnd-kit/sortable";
+import { CSS } from "@dnd-kit/utilities";
 import { TaskCard } from "./task-card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -23,6 +25,7 @@ import {
   Pencil,
   X,
   Check,
+  GripVertical,
 } from "lucide-react";
 import {
   Select,
@@ -60,9 +63,23 @@ export function BoardColumn({
   const [isEditingTitle, setIsEditingTitle] = useState(false);
   const [editTitle, setEditTitle] = useState(column.title);
 
-  const { setNodeRef, isOver } = useDroppable({
+  const { setNodeRef: setDroppableRef, isOver } = useDroppable({
     id: column.id,
   });
+
+  const {
+    attributes,
+    listeners,
+    setNodeRef: setSortableRef,
+    transform,
+    transition,
+    isDragging,
+  } = useSortable({ id: column.id });
+
+  const style = {
+    transform: CSS.Transform.toString(transform),
+    transition,
+  };
 
   const taskIds = useMemo(() => tasks.map((t) => t.id), [tasks]);
 
@@ -84,10 +101,13 @@ export function BoardColumn({
 
   return (
     <div
+      ref={setSortableRef}
+      style={style}
       className={cn(
         "flex flex-col w-[300px] min-w-[300px] md:w-[320px] md:min-w-[320px] rounded-xl bg-card/50 border border-border/40 snap-item shrink-0 max-h-[calc(100vh-180px)]",
         "transition-all duration-200",
-        isOver && "ring-2 ring-primary/30 bg-primary/5"
+        isOver && "ring-2 ring-primary/30 bg-primary/5",
+        isDragging && "opacity-40 scale-[0.97]"
       )}
     >
       {/* Column Color Indicator */}
@@ -98,7 +118,14 @@ export function BoardColumn({
 
       {/* Column Header */}
       <div className="flex items-center justify-between px-3 py-2.5">
-        <div className="flex items-center gap-2 flex-1 min-w-0">
+        <div className="flex items-center gap-1 flex-1 min-w-0">
+          <button
+            {...attributes}
+            {...listeners}
+            className="cursor-grab active:cursor-grabbing p-0.5 rounded hover:bg-accent/50 text-muted-foreground/40 hover:text-muted-foreground transition-colors shrink-0"
+          >
+            <GripVertical className="h-4 w-4" />
+          </button>
           {isEditingTitle ? (
             <div className="flex items-center gap-1 flex-1">
               <Input
@@ -185,7 +212,7 @@ export function BoardColumn({
       {/* Task List */}
       <ScrollArea className="flex-1 px-2 custom-scrollbar">
         <div
-          ref={setNodeRef}
+          ref={setDroppableRef}
           className="space-y-2 pb-2 min-h-[40px]"
         >
           <SortableContext

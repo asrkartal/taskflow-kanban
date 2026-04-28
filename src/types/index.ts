@@ -31,11 +31,33 @@ export interface Task {
   position: number;
   priority: TaskPriority;
   label?: string | null;
+  due_date?: string | null;
+  assignee?: string | null;
+  checklist_items?: ChecklistItem[];
+  comments?: Comment[];
   created_at?: string;
   updated_at?: string;
 }
 
 export type TaskPriority = 'low' | 'medium' | 'high';
+
+export interface ChecklistItem {
+  id: string;
+  task_id: string;
+  title: string;
+  is_completed: boolean;
+  position: number;
+  created_at?: string;
+}
+
+export interface Comment {
+  id: string;
+  task_id: string;
+  user_id: string;
+  content: string;
+  author_name: string;
+  created_at?: string;
+}
 
 // Drag & Drop types
 export interface DragItem {
@@ -69,6 +91,8 @@ export interface UpdateTaskInput {
   description?: string | null;
   priority?: TaskPriority;
   label?: string | null;
+  due_date?: string | null;
+  assignee?: string | null;
   column_id?: string;
   position?: number;
 }

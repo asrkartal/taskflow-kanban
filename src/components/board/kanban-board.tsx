@@ -41,6 +41,7 @@ export function KanbanBoard({
     initialColumns
   );
   const [activeTask, setActiveTask] = useState<Task | null>(null);
+  const [activeColumn, setActiveColumn] = useState<(Column & { tasks: Task[] }) | null>(null);
   const supabase = createClient();
   const scrollContainerRef = useRef<HTMLDivElement>(null);
 
@@ -83,12 +84,24 @@ export function KanbanBoard({
 
   const handleDragStart = useCallback((event: DragStartEvent) => {
     const { active } = event;
-    const taskId = active.id as string;
+    const dragId = active.id as string;
 
-    const col = findColumnByTaskId(taskId);
+    // Check if dragging a column
+    const draggedCol = columnsRef.current.find(c => c.id === dragId);
+    if (draggedCol) {
+      setActiveColumn(draggedCol);
+      setActiveTask(null);
+      return;
+    }
+
+    // Otherwise dragging a task
+    const col = findColumnByTaskId(dragId);
     if (col) {
-      const task = col.tasks.find((t) => t.id === taskId);
-      if (task) setActiveTask(task);
+      const task = col.tasks.find((t) => t.id === dragId);
+      if (task) {
+        setActiveTask(task);
+        setActiveColumn(null);
+      }
     }
   }, [findColumnByTaskId]);
 
@@ -98,6 +111,9 @@ export function KanbanBoard({
 
     const activeId = active.id as string;
     const overId = over.id as string;
+
+    // If dragging a column, skip DragOver (columns handle reorder in DragEnd)
+    if (columnsRef.current.some(c => c.id === activeId)) return;
 
     const sourceCol = findColumnByTaskId(activeId);
     let destCol = findColumnByTaskId(overId);
@@ -132,6 +148,7 @@ export function KanbanBoard({
   const handleDragEnd = useCallback(async (event: DragEndEvent) => {
     const { active, over } = event;
     setActiveTask(null);
+    setActiveColumn(null);
 
     if (!over) return;
 
@@ -140,8 +157,39 @@ export function KanbanBoard({
 
     // Use latest state from ref
     const currentCols = columnsRef.current;
-    
-    // Find where the task ended up AFTER handleDragOver
+
+    // ── Column reorder ──
+    const isColumnDrag = currentCols.some(c => c.id === activeId);
+    if (isColumnDrag) {
+      const activeColIndex = currentCols.findIndex(c => c.id === activeId);
+      const overColIndex = currentCols.findIndex(c => c.id === overId);
+
+      if (activeColIndex !== -1 && overColIndex !== -1 && activeColIndex !== overColIndex) {
+        const newCols = [...currentCols];
+        const [moved] = newCols.splice(activeColIndex, 1);
+        newCols.splice(overColIndex, 0, moved);
+
+        // Recalculate positions
+        const updatedCols = newCols.map((col, i) => ({ ...col, position: (i + 1) * 1000 }));
+        setColumns(updatedCols);
+
+        // Persist all column positions
+        try {
+          for (const col of updatedCols) {
+            await supabase
+              .from("columns")
+              .update({ position: col.position, updated_at: new Date().toISOString() })
+              .eq("id", col.id);
+          }
+        } catch {
+          toast.error("Failed to save column order");
+          setColumns(initialColumns);
+        }
+      }
+      return;
+    }
+
+    // ── Task reorder ──
     const destCol = currentCols.find(col => col.tasks.some(t => t.id === activeId));
     if (!destCol) return;
 
@@ -184,7 +232,7 @@ export function KanbanBoard({
       );
     }
 
-    // Persist to database using the accurate destCol.id and calculated newPosition
+    // Persist task position
     try {
       const { error } = await supabase
         .from("tasks")
@@ -492,6 +540,12 @@ export function KanbanBoard({
           <DragOverlay dropAnimation={null}>
             {activeTask ? (
               <DragOverlayCard task={activeTask} />
+            ) : null}
+            {activeColumn ? (
+              <div className="w-[320px] rounded-xl bg-card/80 border border-primary/30 p-4 shadow-2xl opacity-90 backdrop-blur-xl">
+                <h3 className="text-sm font-semibold">{activeColumn.title}</h3>
+                <p className="text-xs text-muted-foreground mt-1">{activeColumn.tasks.length} tasks</p>
+              </div>
             ) : null}
           </DragOverlay>
         </DndContext>

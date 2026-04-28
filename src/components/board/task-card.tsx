@@ -10,6 +10,8 @@ import {
   AlertCircle,
   ArrowDown,
   ArrowUp,
+  Clock,
+  CheckSquare,
 } from "lucide-react";
 import type { Task } from "@/types";
 import { cn } from "@/lib/utils";
@@ -64,6 +66,12 @@ export const TaskCard = memo(function TaskCard({
   const priority = priorityConfig[task.priority || "medium"];
   const PriorityIcon = priority.icon;
 
+  // Due date formatting
+  const isDueDateOverdue = task.due_date ? new Date(task.due_date) < new Date() : false;
+  const formattedDueDate = task.due_date
+    ? new Date(task.due_date).toLocaleDateString("en-US", { month: "short", day: "numeric" })
+    : null;
+
   return (
     <>
       <div
@@ -84,15 +92,12 @@ export const TaskCard = memo(function TaskCard({
             {/* Title */}
             <p className="text-sm font-medium leading-snug">{task.title}</p>
 
-            {/* Meta */}
-            <div className="flex items-center gap-2 flex-wrap">
+            {/* Meta Row */}
+            <div className="flex items-center gap-1.5 flex-wrap">
               {/* Priority Badge */}
               <Badge
                 variant="outline"
-                className={cn(
-                  "text-[10px] px-1.5 py-0 h-5 font-medium",
-                  priority.color
-                )}
+                className={cn("text-[10px] px-1.5 py-0 h-5 font-medium", priority.color)}
               >
                 <PriorityIcon className="h-2.5 w-2.5 mr-0.5" />
                 {priority.label}
@@ -100,11 +105,24 @@ export const TaskCard = memo(function TaskCard({
 
               {/* Label */}
               {task.label && (
+                <Badge variant="outline" className="text-[10px] px-1.5 py-0 h-5 font-medium">
+                  {task.label}
+                </Badge>
+              )}
+
+              {/* Due Date */}
+              {formattedDueDate && (
                 <Badge
                   variant="outline"
-                  className="text-[10px] px-1.5 py-0 h-5 font-medium"
+                  className={cn(
+                    "text-[10px] px-1.5 py-0 h-5 font-medium",
+                    isDueDateOverdue
+                      ? "bg-red-500/10 text-red-400 border-red-500/20"
+                      : "bg-blue-500/10 text-blue-400 border-blue-500/20"
+                  )}
                 >
-                  {task.label}
+                  <Clock className="h-2.5 w-2.5 mr-0.5" />
+                  {formattedDueDate}
                 </Badge>
               )}
 
@@ -112,7 +130,24 @@ export const TaskCard = memo(function TaskCard({
               {task.description && (
                 <MessageSquare className="h-3 w-3 text-muted-foreground/50" />
               )}
+
+              {/* Checklist indicator */}
+              {task.checklist_items && task.checklist_items.length > 0 && (
+                <span className="flex items-center gap-0.5 text-[10px] text-muted-foreground">
+                  <CheckSquare className="h-2.5 w-2.5" />
+                  {task.checklist_items.filter(i => i.is_completed).length}/{task.checklist_items.length}
+                </span>
+              )}
             </div>
+
+            {/* Bottom row: Assignee */}
+            {task.assignee && (
+              <div className="flex justify-end">
+                <div className="h-6 w-6 rounded-full bg-primary/20 text-primary flex items-center justify-center text-[10px] font-bold" title={task.assignee}>
+                  {task.assignee.charAt(0).toUpperCase()}
+                </div>
+              </div>
+            )}
           </div>
         </div>
       </div>

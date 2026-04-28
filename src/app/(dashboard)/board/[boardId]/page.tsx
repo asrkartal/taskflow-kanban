@@ -60,6 +60,8 @@ export default async function BoardPage({ params }: BoardPageProps) {
     position: number;
     priority: string;
     label: string | null;
+    due_date: string | null;
+    assignee: string | null;
     created_at: string;
     updated_at: string;
   }> = [];
